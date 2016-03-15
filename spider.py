@@ -1,11 +1,14 @@
 #!/usr/bin/python
+from Queue import Queue
 import MySQLdb #mySQL
 from scrapy.selector import HtmlXPathSelector
 from scrapy.http import HtmlResponse
 import urllib2 #http
+from urlparse import urljoin #relative to absolute urls
 import sys, getopt #read command line args
 from db import Database
 import indexer
+import re
 
 class Spider:
 	def main(self, argv):
@@ -40,24 +43,45 @@ class Spider:
 			print e
 			sys.exit(1)
 		
-		self.crawl(url, limit)
+		urlq = Queue()
+		urlq.put(url)
+		self.crawl(urlq, limit)
 
 	#index all terms on the web page and return the list of links
 	def scrape (self, url):
-		http_response = urllib2.urlopen(url)
+		print "scraping ", url
+		request = urllib2.Request(url)
+		#request.add_header('User-Agent', 'HKUSTCrawler/0.1')
+	
+		try:
+			http_response = urllib2.urlopen(request)
+		except urllib2.URLError, e:
+			print "Error loading url", url, "\n", e
+			return []
 		htmlbody = http_response.read()
 		
-		scrapy_response = HtmlResponse(url=url, body=htmlbody)		
+		scrapy_response = HtmlResponse(url=url, body=htmlbody)
 		selector = HtmlXPathSelector(scrapy_response)
+		words = selector.select("//head//title/text()|//body//text()[not(ancestor::script)]").re('[[A-Za-z0-9][A-Za-z0-9\-_]*')
+		print "    words:",
+		for i in range(0, min(len(words), 7)):
+			print words[i], ",",
+		print "..."
+			
+		links = selector.select("//a/@href").extract()
+		linklist = [urljoin(url, l) for l in links]
 		
-		print ''.join(selector.select("//body//text()").extract()).strip()
-		return 0
+		return linklist
 		
-	def crawl (self, url, limit):
-		self.scrape(url)
+	def crawl (self, urlq, limit):
+		while (limit > 0):
+			limit = limit - 1
+			try:
+				map(urlq.put, self.scrape(urlq.get()))
+			except Exception, e:
+				print "fatal error while crawling"
+				print e
 		return 0
-	
-	
 
 if __name__ == '__main__':
     Spider().main(sys.argv[1:])
