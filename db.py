@@ -8,8 +8,21 @@ class Database:
 		else:
 			self.db = MySQLdb.connect(host="localhost", user=username, passwd=password, db=database)
 		self.cur = self.db.cursor() 
-	def query(self,query):
-		self.cur.execute(query)
+	def query(self,query, parameters=None):
+		if (parameters == None):
+			self.cur.execute(query)
+		else:
+			self.cur.execute(query, parameters)
+	def rowcount (self):
+		return self.cur.rowcount;
+	def commit (self):
+		self.db.commit()
+	def fetchOne(self):
+		return self.cur.fetchone()
+	def fetchAll (self):
+		return self.cur.fetchall()
+	def getInsertId (self):
+		return self.cur.lastrowid
 	def close(self):
 		self.db.commit()
 		self.cur.close()

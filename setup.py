@@ -35,6 +35,7 @@ def main():
 	modified DATETIME,\
 	fetched TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\
 	PRIMARY KEY (document_id),\
+	UNIQUE (document_url),\
 	INDEX url_index (document_url));")
 	
 	userConn.query("CREATE TABLE Links (\

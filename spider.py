@@ -7,7 +7,7 @@ import urllib2 #http
 from urlparse import urljoin #relative to absolute urls
 import sys, getopt #read command line args
 from db import Database
-import indexer
+from indexer import Indexer
 import re
 
 class Spider:
@@ -43,9 +43,12 @@ class Spider:
 			print e
 			sys.exit(1)
 		
+		self.myIndexer = Indexer()
 		urlq = Queue()
 		urlq.put(url)
 		self.crawl(urlq, limit)
+		
+		self.myIndexer.close()
 
 	#index all terms on the web page and return the list of links
 	def scrape (self, url):
@@ -67,6 +70,9 @@ class Spider:
 		for i in range(0, min(len(words), 7)):
 			print words[i], ",",
 		print "..."
+		
+		title = ''.join(selector.select("//head/title/text()").extract()).strip()		
+		print "id: ", self.myIndexer.indexDocument(url, title, len(words))
 			
 		links = selector.select("//a/@href").extract()
 		linklist = [urljoin(url, l) for l in links]
@@ -74,13 +80,13 @@ class Spider:
 		return linklist
 		
 	def crawl (self, urlq, limit):
-		while (limit > 0):
+		while (limit > 0 and urlq != None):
 			limit = limit - 1
-			try:
-				map(urlq.put, self.scrape(urlq.get()))
-			except Exception, e:
-				print "fatal error while crawling"
-				print e
+			#try:
+			map(urlq.put, self.scrape(urlq.get()))
+			#except Exception, e:
+			#	print "fatal error while crawling"
+			#	print e
 		return 0
 
 if __name__ == '__main__':
