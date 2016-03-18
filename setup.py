@@ -19,14 +19,14 @@ def main():
 	conn.query("DROP DATABASE IF EXISTS comp4321;")
 	conn.query("GRANT USAGE ON *.* TO 'user4321'@'localhost';")
 	conn.query("DROP USER 'user4321'@'localhost';")
-
+	
 	conn.query("CREATE DATABASE comp4321;")
 	conn.query("GRANT ALL PRIVILEGES ON comp4321.* To 'user4321'@'localhost' IDENTIFIED BY 'gryphon';")
-
+	
 	conn.close()
-
+	
 	userConn = Database()
-
+	
 	userConn.query("CREATE TABLE Documents (\
 	document_id int NOT NULL AUTO_INCREMENT,\
 	document_url varchar(255) NOT NULL,\
@@ -37,7 +37,7 @@ def main():
 	PRIMARY KEY (document_id),\
 	UNIQUE (document_url),\
 	INDEX url_index (document_url));")
-
+	
 	userConn.query("CREATE TABLE Links (\
 	parent_id int NOT NULL,\
 	child_id int NOT NULL,\
@@ -45,21 +45,19 @@ def main():
 	FOREIGN KEY (parent_id) REFERENCES Documents(document_id) ON DELETE CASCADE,\
 	FOREIGN KEY (child_id) REFERENCES Documents(document_id) ON DELETE CASCADE);")
 
-#eventually include idf in this table
+#eventually include idf in this table	
 	userConn.query("CREATE TABLE KeyWords (\
 	word_id	int NOT NULL AUTO_INCREMENT,\
 	word VARCHAR(255) NOT NULL,\
 	document_frequency int NOT NULL COMMENT 'the number of unique documents which contain at least one instance of the word',\
 	PRIMARY KEY (word_id),\
-	UNIQUE (word),\
 	INDEX word_index (word) USING HASH);")
-
+	
 	userConn.query("CREATE TABLE InvertedIndex (\
 	word_id	int NOT NULL,\
 	document_id int NOT NULL,\
 	term_frequency int NOT NULL DEFAULT 0 COMMENT 'the number of appearances this word (word_id) makes in the document (document_id)',\
 	PRIMARY KEY (word_id, document_id),\
-	INDEX doc_index (document_id),\
 	FOREIGN KEY (word_id) REFERENCES KeyWords(word_id) ON DELETE CASCADE,\
 	FOREIGN KEY (document_id) REFERENCES Documents(document_id) ON DELETE CASCADE);")
 
@@ -73,6 +71,6 @@ def main():
 	FOREIGN KEY (document_id) REFERENCES Documents (document_id) ON DELETE CASCADE);")
 
 	userConn.close()
-
+	
 if __name__ == '__main__':
     main()

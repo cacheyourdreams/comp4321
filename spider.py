@@ -19,7 +19,7 @@ class Spider:
 			print err
 			print "Usage: spider.py -s \"starting url\" -n \"number of pages to retrieve\""
 			sys.exit(2)
-
+		
 		url = "";
 		limit = -1
 		for opt, arg in opts:
@@ -34,7 +34,7 @@ class Spider:
 		if (url == "" or limit == -1):
 			print "Usage: spider.py -s \"starting url\" -n \"number of pages to retrieve\""
 			sys.exit(2)
-
+		
 		#open database or die
 		try:
 			self.dbConn = Database()
@@ -42,12 +42,12 @@ class Spider:
 			print "Database connection could not be started, have you run setup.py?"
 			print e
 			sys.exit(1)
-
+		
 		self.myIndexer = Indexer()
 		urlq = Queue()
 		urlq.put(url)
 		self.crawl(urlq, limit)
-
+		
 		self.myIndexer.close()
 
 	#index all terms on the web page and return the list of links
@@ -55,14 +55,14 @@ class Spider:
 		print "scraping ", url
 		request = urllib2.Request(url)
 		#request.add_header('User-Agent', 'HKUSTCrawler/0.1')
-
+	
 		try:
 			http_response = urllib2.urlopen(request)
 		except urllib2.URLError, e:
 			print "Error loading url", url, "\n", e
 			return []
 		htmlbody = http_response.read()
-
+		
 		scrapy_response = HtmlResponse(url=url, body=htmlbody)
 		selector = HtmlXPathSelector(scrapy_response)
 		words = selector.select("//head//title/text()|//body//text()[not(ancestor::script)]").re('[[A-Za-z0-9][A-Za-z0-9\-_]*')
@@ -70,19 +70,15 @@ class Spider:
 		for i in range(0, min(len(words), 7)):
 			print words[i], ",",
 		print "..."
-
-		title = ''.join(selector.select("//head/title/text()").extract()).strip()
-		document_id = self.myIndexer.indexDocument(url, title, len(words))
-		print "id: ", document_id
-
-		print "indexing words..."
-		print self.myIndexer.indexWords(document_id, words), " words indexed successfully "
-
+		
+		title = ''.join(selector.select("//head/title/text()").extract()).strip()		
+		print "id: ", self.myIndexer.indexDocument(url, title, len(words))
+			
 		links = selector.select("//a/@href").extract()
 		linklist = [urljoin(url, l) for l in links]
-
+		
 		return linklist
-
+		
 	def crawl (self, urlq, limit):
 		while (limit > 0 and urlq != None):
 			limit = limit - 1
@@ -95,3 +91,10 @@ class Spider:
 
 if __name__ == '__main__':
     Spider().main(sys.argv[1:])
+
+
+
+
+
+
+
