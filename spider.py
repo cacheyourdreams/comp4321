@@ -9,6 +9,7 @@ import sys, getopt #read command line args
 from db import Database
 from indexer import Indexer
 import re
+from datetime import datetime
 
 class Spider:
 	def main(self, argv):
@@ -71,8 +72,17 @@ class Spider:
 			print words[i], ",",
 		print "..."
 
-		title = ''.join(selector.select("//head/title/text()").extract()).strip()
-		document_id = self.myIndexer.indexDocument(url, title, len(words))
+		title = ' '.join(selector.select("//head/title/text()").re("[[A-Za-z0-9][A-Za-z0-9\-_]*"))
+		
+		#try and get modified date
+		#eventually try and read the last-modified http header (although most pages do not specify this)
+		date = selector.select("//p[contains(@class, \"right\")]/text()").re('(?<=Last updated on )\d{4}\-\d{2}\-\d{2}')
+		modified = None
+		if (len(date) > 0):
+			modified = datetime.strptime(date[0], "%Y-%m-%d")
+
+			
+		document_id = self.myIndexer.indexDocument(url, title, len(words), modified)
 		print "id: ", document_id
 
 		print "indexing words..."
@@ -80,7 +90,14 @@ class Spider:
 
 		links = selector.select("//a/@href").extract()
 		linklist = [urljoin(url, l) for l in links]
-
+		
+		self.myIndexer.indexLinks(document_id, linklist)
+		
+		try: #remove self links
+			linklist.remove(url)
+		except ValueError, ve:
+			pass
+		
 		return linklist
 
 	def crawl (self, urlq, limit):

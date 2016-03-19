@@ -11,11 +11,18 @@ class Indexer:
 		self.dbInstance.commit()
 
 
-	def indexDocument (self, url, title, size):
+	def indexDocument (self, url, title, size, modified = None):
+		
+		sql_select = "SELECT document_id FROM Documents WHERE document_url = %s;"
 		sql_insert = "INSERT INTO Documents (document_url, document_title, document_size) \
 		VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE document_title = %s, document_size = %s;"
-		sql_select = "SELECT document_id FROM Documents WHERE document_url = %s;"
-		self.dbInstance.query(sql_insert, (url,title,size,title,size))
+		placeholders = (url,title,size,title,size)
+		if (modified != None):
+			sql_insert = "INSERT INTO Documents (document_url, document_title, document_size, modified) \
+			VALUES (%s, %s, %s, %s) ON DUPLICATE KEY UPDATE document_title = %s, document_size = %s, modified = %s;"
+			placeholders = (url,title,size,modified,title,size,modified)
+		
+		self.dbInstance.query(sql_insert, placeholders)
 
 
 		if self.dbInstance.rowcount > 0:
@@ -34,14 +41,22 @@ class Indexer:
 			#Delete the document from the InvertedIndex
 			sql_delete = "DELETE FROM InvertedIndex WHERE document_id = %s"
 			self.dbInstance.query(sql_delete, [doc_id])
+			
+			sql_delete = "DELETE FROM Links WHERE parent_id = %s"
+			self.dbInstance.query(sql_delete, [doc_id])
 
+			
 			return doc_id
 
 		else:  #If the row was inserted, return its id
 			return self.dbInstance.getInsertId()
 
 
-
+	def indexLinks (self, parent_id, children):
+		for child_id in children:
+			sql_insert = "INSERT INTO Links (parent_id, child_url) VALUE (%s, %s) ON DUPLICATE KEY UPDATE parent_id=parent_id;"
+			self.dbInstance.query(sql_insert, [parent_id, child_id])
+			
 
 	def indexWords (self,document_id, word_list):
 		term_frequency = {}

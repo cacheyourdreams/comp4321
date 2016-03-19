@@ -40,10 +40,13 @@ def main():
 
 	userConn.query("CREATE TABLE Links (\
 	parent_id int NOT NULL,\
-	child_id int NOT NULL,\
-	PRIMARY KEY (parent_id, child_id),\
-	FOREIGN KEY (parent_id) REFERENCES Documents(document_id) ON DELETE CASCADE,\
-	FOREIGN KEY (child_id) REFERENCES Documents(document_id) ON DELETE CASCADE);")
+	child_url varchar(255) NOT NULL,\
+	PRIMARY KEY (parent_id, child_url),\
+	FOREIGN KEY (parent_id) REFERENCES Documents(document_id) ON DELETE CASCADE\
+	);")
+#FOREIGN KEY (child_id) REFERENCES Documents(document_id) ON DELETE CASCADE
+#disabled this constraint for the time being, to allow links to children which have not yet been scraped. Eventually it may be bettter to add this back in and add rows to Links when processing the child document instead of the parent document (would require keeping track of which document adds pages to the scrape queue)
+#also this would allow child_url to become child_id again
 
 #eventually include idf in this table
 	userConn.query("CREATE TABLE KeyWords (\
