@@ -45,6 +45,7 @@ class Spider:
 			sys.exit(1)
 
 		self.myIndexer = Indexer()
+		
 		urlq = Queue()
 		urlq.put(url)
 		self.crawl(urlq, limit)
@@ -84,7 +85,7 @@ class Spider:
 			
 		document_id = self.myIndexer.indexDocument(url, title, len(words), modified)
 		print "id: ", document_id
-
+		
 		print "indexing words..."
 		print self.myIndexer.indexWords(document_id, words), " words indexed successfully "
 

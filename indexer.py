@@ -1,10 +1,20 @@
 #!/usr/bin/python
 import MySQLdb
 from db import *
+import sys
+sys.path.append("stemming-1.0-py2.5.egg")
+from stemming.porter import stem
+
 
 class Indexer:
 	def __init__(self):
 		self.dbInstance = Database()
+		self.stopwords = set()
+		
+		with open("stopwords.txt", "r") as ins:
+			array = []
+			for line in ins:
+				self.stopwords.add(line.strip())
 
 
 	def getLastCrawlTime (self, url):
@@ -56,12 +66,18 @@ class Indexer:
 		for child_id in children:
 			sql_insert = "INSERT INTO Links (parent_id, child_url) VALUE (%s, %s) ON DUPLICATE KEY UPDATE parent_id=parent_id;"
 			self.dbInstance.query(sql_insert, [parent_id, child_id])
-			
 
 	def indexWords (self,document_id, word_list):
 		term_frequency = {}
+		
 		for i in range(0, len(word_list)):
 			word = word_list[i].lower()
+			#stop word removal
+			if (word in self.stopwords):
+				continue
+			#stemming
+			word = stem(word);
+			
 			if term_frequency.has_key(word):
 				term_frequency[word] += 1
 			else:
