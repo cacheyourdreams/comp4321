@@ -8,6 +8,7 @@ The following packages are required for correct operation of the code:
 * python 2.7
 * python-mysql
 * scrapy
+* stemming 1.0 (included in project)
 * mysql (running on local host)
 
 ##Set up
@@ -119,7 +120,7 @@ This selects all alphanumeric words, which must start with a letter or number bu
 
 The class formats the data scraped from the webpages by spider.py into the correct shape for the database backend. If a record already exists for any of the entries (e.g. a common keyword is likely to have been seen before) then the index.py will extract the ID of the existing record, otherwise it will insert a new record and return the new ID, using the lastrowid property.
 
-The indexer also applies stop word removal, using the provided stopwords.txt file, and stemming, using a standard implementation of Porter's algorithm, using a public python library. 
+The indexer also applies stop word removal, using the provided stopwords.txt file, and stemming, using a standard implementation of Porter's algorithm, using a public python library [https://pypi.python.org/pypi/stemming/1.0]. 
 
 ##Database structure
 
