@@ -73,10 +73,10 @@ class Indexer:
 		for i in range(0, len(word_list)):
 			word = word_list[i].lower()
 			#stop word removal
-			if (word in self.stopwords):
+			if self.isStopword(word):
 				continue
 			#stemming
-			word = stem(word);
+			word = self.getStemmed(word);
 			
 			if term_frequency.has_key(word):
 				term_frequency[word] += 1
@@ -88,6 +88,12 @@ class Indexer:
 			self.addToInvertedIndex(word_id,document_id,term_frequency[word])
 
 		return len(term_frequency)
+	
+	def isStopword(self, word):
+		return (word in self.stopwords)
+	
+	def getStemmed (self, word):
+		return stem(word)
 
 	def addToInvertedIndex(self,wrd_id,doc_id,term_freq):
 		sql_insert = "INSERT INTO InvertedIndex (word_id, document_id,term_frequency) \

@@ -67,7 +67,7 @@ class Spider:
 
 		scrapy_response = HtmlResponse(url=url, body=htmlbody)
 		selector = HtmlXPathSelector(scrapy_response)
-		words = selector.select("//head//title/text()|//body//text()[not(ancestor::script)]").re('[[A-Za-z0-9][A-Za-z0-9\-_]*')
+		words = selector.select("//head//title/text()|//body//text()[not(ancestor::script)]").re('[A-Za-z0-9][A-Za-z0-9\-_]*')
 		print "    words:",
 		for i in range(0, min(len(words), 7)):
 			print words[i], ",",
