@@ -43,7 +43,7 @@ class Searcher:
 		documents = dict()
 		for doc in documentVectors.keys():
 			sim = self.cosSim(queryWordIds,documentVectors[doc][1],documentVectors[doc][0])
-			documents[doc] = sim
+			documents[doc] = [sim, documentVectors[doc][2]]
 		return sorted(documents.items(), key=operator.itemgetter(1))
 		
 	
@@ -53,7 +53,7 @@ class Searcher:
 		N = self.dbInstance.fetchOne()[0]
 		
 		#get inverted index entries for each word in the search term
-		sql_select = "SELECT InvertedIndex.*, document_url, document_frequency, document_size, max_tf FROM InvertedIndex LEFT JOIN KeyWords on InvertedIndex.word_id=KeyWords.word_id LEFT JOIN Documents ON Documents.document_id = InvertedIndex.document_id  WHERE InvertedIndex.word_id IN (SELECT word_id FROM KeyWords WHERE word=%s"
+		sql_select = "SELECT InvertedIndex.*, document_url, document_frequency, document_size, max_tf, document_title FROM InvertedIndex LEFT JOIN KeyWords on InvertedIndex.word_id=KeyWords.word_id LEFT JOIN Documents ON Documents.document_id = InvertedIndex.document_id  WHERE InvertedIndex.word_id IN (SELECT word_id FROM KeyWords WHERE word=%s"
 		for x in range(1,len(terms)):
 			sql_select = sql_select + " OR word = %s"
 		sql_select = sql_select + ");"
@@ -71,7 +71,7 @@ class Searcher:
 				docVector = documentVectors[row[indexValue]][1]
 			else:
 				#if not, create a new entry
-				documentVectors[row[indexValue]] = [row[5], dict()]
+				documentVectors[row[indexValue]] = [row[5], dict(), row[7]]
 			#obtain normalised tf*idf value
 			val = (float(row[2])*log(N/float(row[4]),2)) / float(row[6])
 			docVector[row[0]] = val
