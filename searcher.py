@@ -28,7 +28,7 @@ class Searcher:
 			print "Usage: searcher.py -s \"search quey\""
 			sys.exit(2)
 			
-		sortedDocs = getSearchResults(query)
+		sortedDocs = self.getSearchResults(query)
 		for d in sortedDocs:
 			print d
 	
