@@ -34,6 +34,7 @@ def main():
 	document_size int NOT NULL,\
 	modified DATETIME,\
 	fetched TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\
+	max_tf int DEFAULT 1,\
 	PRIMARY KEY (document_id),\
 	UNIQUE (document_url),\
 	INDEX url_index (document_url));")

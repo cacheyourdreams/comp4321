@@ -45,6 +45,7 @@ class Spider:
 			sys.exit(1)
 
 		self.myIndexer = Indexer()
+		self.document_id = 0
 		
 		urlq = Queue()
 		urlq.put(url)
@@ -83,16 +84,16 @@ class Spider:
 			modified = datetime.strptime(date[0], "%Y-%m-%d")
 
 			
-		document_id = self.myIndexer.indexDocument(url, title, len(words), modified)
-		print "id: ", document_id
+		self.document_id = self.myIndexer.indexDocument(url, title, len(words), modified)
+		print "id: ", self.document_id
 		
 		print "indexing words..."
-		print self.myIndexer.indexWords(document_id, words), " words indexed successfully "
+		print self.myIndexer.indexWords(self.document_id, words), " words indexed successfully "
 
 		links = selector.select("//a/@href").extract()
 		linklist = [urljoin(url, l) for l in links]
 		
-		self.myIndexer.indexLinks(document_id, linklist)
+		self.myIndexer.indexLinks(self.document_id, linklist)
 		
 		try: #remove self links
 			linklist.remove(url)
@@ -102,8 +103,8 @@ class Spider:
 		return linklist
 
 	def crawl (self, urlq, limit):
-		while (limit > 0 and urlq != None):
-			limit = limit - 1
+		while (self.document_id < limit and urlq != None):
+			#limit = limit - 1
 			#try:
 			map(urlq.put, self.scrape(urlq.get()))
 			#except Exception, e:

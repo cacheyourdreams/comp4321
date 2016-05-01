@@ -69,7 +69,10 @@ class Indexer:
 
 	def indexWords (self,document_id, word_list):
 		term_frequency = {}
+		positions = {}
+		max_tf = 1
 		
+		p = 0
 		for i in range(0, len(word_list)):
 			word = word_list[i].lower()
 			#stop word removal
@@ -80,13 +83,28 @@ class Indexer:
 			
 			if term_frequency.has_key(word):
 				term_frequency[word] += 1
+				if term_frequency[word] > max_tf:
+					max_tf = term_frequency[word]
 			else:
 				term_frequency[word] = 1
-
+				
+			if positions.has_key(word):
+				positions[word].append(p)
+			else:
+				positions[word] = [p]
+			p = p + 1
+		
+		wordIds = {}
 		for word in term_frequency:
 			word_id = self.addToKeywords(word)
+			wordIds[word] = word_id
 			self.addToInvertedIndex(word_id,document_id,term_frequency[word])
 
+		self.addToIndexPositions(positions,document_id,wordIds)
+		
+		#update maximum term frequency figure
+		sql_update = "UPDATE Documents SET max_tf=%s WHERE document_id=%s;"
+		self.dbInstance.query(sql_update,(max_tf,document_id))
 		return len(term_frequency)
 	
 	def isStopword(self, word):
@@ -94,6 +112,14 @@ class Indexer:
 	
 	def getStemmed (self, word):
 		return stem(word)
+		
+	def addToIndexPositions(self,positions,d,wordIds):
+		for w in positions.keys():
+			for p in positions[w]:
+				sql_insert = "INSERT INTO IndexPositions (word_id, document_id, position) \
+		VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE position=position;"
+				self.dbInstance.query(sql_insert,(wordIds[w],d,p))
+
 
 	def addToInvertedIndex(self,wrd_id,doc_id,term_freq):
 		sql_insert = "INSERT INTO InvertedIndex (word_id, document_id,term_frequency) \
