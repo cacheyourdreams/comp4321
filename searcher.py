@@ -45,7 +45,17 @@ class Searcher:
 		documents = dict()
 		for doc in documentVectors.keys():
 			sim = self.cosSim(queryWordIds,documentVectors[doc][1],documentVectors[doc][0])
-			documents[doc] = [sim, documentVectors[doc][2]]
+			#document_size, vector, title, modified, keyword:freq, parents, children
+			#r[0] = url
+			#r[1][0] = rank
+			#r[1][1] = title
+			#r[1][2] = modified
+			#r[1][3] = size
+			#r[1][4] = dict{keyword: freq}
+			#r[1][5] = array{parents}
+			#r[1][6] = array{children}
+
+			documents[doc] = [sim, documentVectors[doc][2], documentVectors[doc][3], documentVectors[doc][0], documentVectors[doc][4], documentVectors[doc][5], documentVectors[doc][6]]
 		return sorted(documents.items(), key=operator.itemgetter(1))
 		
 	
@@ -55,7 +65,7 @@ class Searcher:
 		N = self.dbInstance.fetchOne()[0]
 		
 		#get inverted index entries for each word in the search term
-		sql_select = "SELECT InvertedIndex.word_id, InvertedIndex.document_id, InvertedIndex.term_frequency, document_url, document_frequency, document_size, max_tf, document_title, InvertedIndex.in_title FROM InvertedIndex LEFT JOIN KeyWords on InvertedIndex.word_id=KeyWords.word_id LEFT JOIN Documents ON Documents.document_id = InvertedIndex.document_id  WHERE InvertedIndex.word_id IN (SELECT word_id FROM KeyWords WHERE word=%s"
+		sql_select = "SELECT InvertedIndex.word_id, InvertedIndex.document_id, InvertedIndex.term_frequency, document_url, document_frequency, document_size, max_tf, document_title, InvertedIndex.in_title, modified, fetched, word FROM InvertedIndex LEFT JOIN KeyWords on InvertedIndex.word_id=KeyWords.word_id LEFT JOIN Documents ON Documents.document_id = InvertedIndex.document_id  WHERE InvertedIndex.word_id IN (SELECT word_id FROM KeyWords WHERE word=%s"
 		for x in range(1,len(terms)):
 			sql_select = sql_select + " OR word = %s"
 		sql_select = sql_select + ");"
@@ -73,13 +83,26 @@ class Searcher:
 				docVector = documentVectors[row[indexValue]][1]
 			else:
 				#if not, create a new entry
-				documentVectors[row[indexValue]] = [row[5], dict(), row[7]]
+				#get links to/from
+				sql_select_links = "SELECT document_url, child_url FROM Links LEFT JOIN Documents on Documents.document_id = Links.parent_id WHERE Links.parent_id = %s OR Links.child_url = %s;"
+				self.dbInstance.query(sql_select_links, (row[1],row[3]))
+				links = self.dbInstance.fetchAll()
+				parents = []
+				children = []
+				for link in links:
+					if link[1] == row[3]:
+						parents.append(link[0])
+					else:
+						children.append(link[1])
+				#document_size, vector, title, modified, keyword:freq, parents, children
+				documentVectors[row[indexValue]] = [row[5], dict(), row[7], row[9], dict() , parents, children]
 			#obtain normalised tf*idf value
 			val = (float(row[2])*log(N/float(row[4]),2)) / float(row[6])
 			#give a boost to the weight if it appears in the document title
 			val = val * (1.5 if row[8] == 1 else 1) 
 			docVector[row[0]] = val
 			documentVectors[row[indexValue]][1] = docVector
+			documentVectors[row[indexValue]][4][row[11]] = row[2]
 		
 		return documentVectors
 	
