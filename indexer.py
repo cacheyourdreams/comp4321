@@ -35,7 +35,7 @@ class Indexer:
 		self.dbInstance.query(sql_insert, placeholders)
 
 
-		if self.dbInstance.rowcount > 0:
+		if self.dbInstance.rowcount > 1:
 			#Already seen this document. Find its id and delete it from Keywords and InvertedIndex
 
 			self.dbInstance.query(sql_select, [url])
@@ -67,7 +67,7 @@ class Indexer:
 			sql_insert = "INSERT INTO Links (parent_id, child_url) VALUE (%s, %s) ON DUPLICATE KEY UPDATE parent_id=parent_id;"
 			self.dbInstance.query(sql_insert, [parent_id, child_id])
 
-	def indexWords (self,document_id, word_list):
+	def indexWords (self,document_id, word_list, title_word_list):
 		term_frequency = {}
 		positions = {}
 		max_tf = 1
@@ -98,7 +98,10 @@ class Indexer:
 		for word in term_frequency:
 			word_id = self.addToKeywords(word)
 			wordIds[word] = word_id
-			self.addToInvertedIndex(word_id,document_id,term_frequency[word])
+			in_title = 0
+			if (word in title_word_list):
+				in_title = 1
+			self.addToInvertedIndex(word_id,document_id,term_frequency[word],in_title)
 
 		self.addToIndexPositions(positions,document_id,wordIds)
 		
@@ -121,10 +124,10 @@ class Indexer:
 				self.dbInstance.query(sql_insert,(wordIds[w],d,p))
 
 
-	def addToInvertedIndex(self,wrd_id,doc_id,term_freq):
-		sql_insert = "INSERT INTO InvertedIndex (word_id, document_id,term_frequency) \
-		VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE term_frequency=%s;"
-		self.dbInstance.query(sql_insert,(wrd_id,doc_id,term_freq,term_freq))
+	def addToInvertedIndex(self,wrd_id,doc_id,term_freq,in_title):
+		sql_insert = "INSERT INTO InvertedIndex (word_id, document_id,term_frequency,in_title) \
+		VALUES (%s, %s, %s, %s) ON DUPLICATE KEY UPDATE term_frequency=%s;"
+		self.dbInstance.query(sql_insert,(wrd_id,doc_id,term_freq,term_freq,in_title))
 
 	def addToKeywords(self,word):
 

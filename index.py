@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import cgi
 import cgitb; cgitb.enable()
+import datetime
 from searcher import Searcher
 
 print "Content-type: text/html"
@@ -14,9 +15,16 @@ html = ""
 
 if "query" in form:
 	query = form.getvalue('query')
+	a = datetime.datetime.now()
 	results = mySearcher.getSearchResults(query)
+	b = datetime.datetime.now()
+	c = b - a
+	n = 0
 	for r in results:
-		html = "<li><a href=\""+r[0]+"\">"+r[1][1]+"</a></li>" + html
+		n = n + 1
+		if n == 51:
+			break
+		html = "<li><a href=\""+r[0]+"\">"+cgi.escape(r[1][1])+"</a></li>" + html
 
 print """
 <html>
@@ -34,5 +42,6 @@ COMP4321
 <ul>
 %s
 </ul>
+<p>%s results found in %f seconds</p>
 </body>
-</html>""" % html
+</html>""" % (html, ("50+" if n == 51 else str(n)), c.total_seconds())

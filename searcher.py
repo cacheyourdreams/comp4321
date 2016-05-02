@@ -33,7 +33,9 @@ class Searcher:
 			print d
 	
 	def getSearchResults (self, query):
-		searchTerms = self.parseQuery(query)			
+		searchTerms = self.parseQuery(query)	
+		if len(searchTerms) == 0:
+			return {}
 		queryWordIds = self.getWordIds(searchTerms)
 		documentVectors = self.getDocumentVectors(searchTerms)
 		sortedDocs = self.sortDocumentVectors(queryWordIds,documentVectors)
@@ -53,7 +55,7 @@ class Searcher:
 		N = self.dbInstance.fetchOne()[0]
 		
 		#get inverted index entries for each word in the search term
-		sql_select = "SELECT InvertedIndex.*, document_url, document_frequency, document_size, max_tf, document_title FROM InvertedIndex LEFT JOIN KeyWords on InvertedIndex.word_id=KeyWords.word_id LEFT JOIN Documents ON Documents.document_id = InvertedIndex.document_id  WHERE InvertedIndex.word_id IN (SELECT word_id FROM KeyWords WHERE word=%s"
+		sql_select = "SELECT InvertedIndex.word_id, InvertedIndex.document_id, InvertedIndex.term_frequency, document_url, document_frequency, document_size, max_tf, document_title, InvertedIndex.in_title FROM InvertedIndex LEFT JOIN KeyWords on InvertedIndex.word_id=KeyWords.word_id LEFT JOIN Documents ON Documents.document_id = InvertedIndex.document_id  WHERE InvertedIndex.word_id IN (SELECT word_id FROM KeyWords WHERE word=%s"
 		for x in range(1,len(terms)):
 			sql_select = sql_select + " OR word = %s"
 		sql_select = sql_select + ");"

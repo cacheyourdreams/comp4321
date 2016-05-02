@@ -69,6 +69,7 @@ class Spider:
 		scrapy_response = HtmlResponse(url=url, body=htmlbody)
 		selector = HtmlXPathSelector(scrapy_response)
 		words = selector.select("//head//title/text()|//body//text()[not(ancestor::script)]").re('[A-Za-z0-9][A-Za-z0-9\-_]*')
+		titleWords = selector.select("//head//title/text()").re('[A-Za-z0-9][A-Za-z0-9\-_]*')
 		print "    words:",
 		for i in range(0, min(len(words), 7)):
 			print words[i], ",",
@@ -88,7 +89,7 @@ class Spider:
 		print "id: ", self.document_id
 		
 		print "indexing words..."
-		print self.myIndexer.indexWords(self.document_id, words), " words indexed successfully "
+		print self.myIndexer.indexWords(self.document_id, words, titleWords), " words indexed successfully "
 
 		links = selector.select("//a/@href").extract()
 		linklist = [urljoin(url, l) for l in links]
