@@ -76,6 +76,8 @@ class Searcher:
 				documentVectors[row[indexValue]] = [row[5], dict(), row[7]]
 			#obtain normalised tf*idf value
 			val = (float(row[2])*log(N/float(row[4]),2)) / float(row[6])
+			#give a boost to the weight if it appears in the document title
+			val = val * (1.5 if row[8] == 1 else 1) 
 			docVector[row[0]] = val
 			documentVectors[row[indexValue]][1] = docVector
 		
