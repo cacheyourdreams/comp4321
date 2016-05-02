@@ -127,7 +127,7 @@ class Indexer:
 	def addToInvertedIndex(self,wrd_id,doc_id,term_freq,in_title):
 		sql_insert = "INSERT INTO InvertedIndex (word_id, document_id,term_frequency,in_title) \
 		VALUES (%s, %s, %s, %s) ON DUPLICATE KEY UPDATE term_frequency=%s;"
-		self.dbInstance.query(sql_insert,(wrd_id,doc_id,term_freq,term_freq,in_title))
+		self.dbInstance.query(sql_insert,(wrd_id,doc_id,term_freq,in_title,term_freq))
 
 	def addToKeywords(self,word):
 
