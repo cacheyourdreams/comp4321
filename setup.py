@@ -35,6 +35,7 @@ def main():
 	modified DATETIME,\
 	fetched TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\
 	max_tf int DEFAULT 1,\
+	document_chars int NOT NULL,\
 	PRIMARY KEY (document_id),\
 	UNIQUE (document_url),\
 	INDEX url_index (document_url));")

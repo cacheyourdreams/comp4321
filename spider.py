@@ -84,11 +84,15 @@ class Spider:
 		#try and read the last-modified http header (although most pages do not specify this)
 		strLastMod = ""
 		strDate = ""
+		strSize = ""
 		for i in http_response.info():
 			if (str(i) == "last-modified"):
 				strLastMod = http_response.info()[i]
 			elif (str(i) == "date"):
 				strDate = http_response.info()[i]
+			elif (str(i) == "size"):
+				strSize = http_response.info()[i]
+		
 		if (strLastMod != ""):
 			modified = datetime(*eut.parsedate(strLastMod)[:6])
 		
@@ -101,9 +105,12 @@ class Spider:
 		#if no last-modified header was provided, then just use the date header
 		if (modified == None and strDate != ""):
 			modified = datetime(*eut.parsedate(strLastMod)[:6])
-		
 			
-		self.document_id = self.myIndexer.indexDocument(url, title, len(words), modified)
+		#if no size header, use the length of the html:
+		if (strSize == ""):
+			strSize = str(len(htmlbody))
+		
+		self.document_id = self.myIndexer.indexDocument(url, title, len(words), strSize, modified)
 		print "id: ", self.document_id
 		
 		print "indexing words..."
