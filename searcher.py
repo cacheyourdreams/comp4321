@@ -79,7 +79,7 @@ class Searcher:
 		N = self.dbInstance.fetchOne()[0]
 		
 		#get inverted index entries for each word in the search term
-		sql_select = "SELECT InvertedIndex.word_id, InvertedIndex.document_id, InvertedIndex.term_frequency, document_url, document_frequency, document_size, max_tf, document_title, InvertedIndex.in_title, modified, fetched, word FROM InvertedIndex LEFT JOIN KeyWords on InvertedIndex.word_id=KeyWords.word_id LEFT JOIN Documents ON Documents.document_id = InvertedIndex.document_id  WHERE InvertedIndex.word_id IN (SELECT word_id FROM KeyWords WHERE word=%s"
+		sql_select = "SELECT InvertedIndex.word_id, InvertedIndex.document_id, InvertedIndex.term_frequency, document_url, document_frequency, document_size, max_tf, document_title, InvertedIndex.in_title, modified, fetched, word, document_chars FROM InvertedIndex LEFT JOIN KeyWords on InvertedIndex.word_id=KeyWords.word_id LEFT JOIN Documents ON Documents.document_id = InvertedIndex.document_id  WHERE InvertedIndex.word_id IN (SELECT word_id FROM KeyWords WHERE word=%s"
 		for x in range(1,len(terms)):
 			sql_select = sql_select + " OR word = %s"
 		sql_select = sql_select + ");"
@@ -109,7 +109,7 @@ class Searcher:
 					else:
 						children.append(link[1])
 				#document_size, vector, title, modified, keyword:freq, parents, children, document_id
-				documentVectors[row[indexValue]] = [row[5], dict(), row[7], row[9], dict() , parents, children, row[1]]
+				documentVectors[row[indexValue]] = [row[5], dict(), row[7], row[9], dict() , parents, children, row[1], row[12]]
 			#obtain normalised tf*idf value
 			val = (float(row[2])*log(N/float(row[4]),2)) / float(row[6])
 			#give a boost to the weight if it appears in the document title
