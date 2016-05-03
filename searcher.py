@@ -214,12 +214,13 @@ class Searcher:
 			
 			phraseTerms = re.split("[^A-Za-z0-9\-_]+", m)
 			phrase = []
-			for w in phraseTerms:
+			for wrd in phraseTerms:
+				w = wrd.lower()
 				if (self.myIndexer.isStopword(w)):
 					continue
 				stemmed = self.myIndexer.getStemmed(w)
 				if len(stemmed) > 0:
-					phrase.append(stemmed.lower())
+					phrase.append(stemmed)
 			if len(phrase) > 0:
 				phrases.append(phrase)
 		
