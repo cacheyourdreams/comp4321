@@ -72,6 +72,9 @@ class Indexer:
 		positions = {}
 		max_tf = 1
 		
+		for i in range(0, len(title_word_list)):
+			title_word_list[i] = title_word_list[i].lower()
+		
 		p = 0
 		for i in range(0, len(word_list)):
 			word = word_list[i].lower()

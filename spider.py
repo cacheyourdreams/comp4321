@@ -10,6 +10,8 @@ from db import Database
 from indexer import Indexer
 import re
 from datetime import datetime
+import email.utils as eut
+
 
 class Spider:
 	def main(self, argv):
@@ -78,12 +80,28 @@ class Spider:
 		title = ' '.join(selector.select("//head/title/text()").re("[[A-Za-z0-9][A-Za-z0-9\-_]*"))
 		
 		#try and get modified date
-		#eventually try and read the last-modified http header (although most pages do not specify this)
-		date = selector.select("//p[contains(@class, \"right\")]/text()").re('(?<=Last updated on )\d{4}\-\d{2}\-\d{2}')
 		modified = None
+		#try and read the last-modified http header (although most pages do not specify this)
+		strLastMod = ""
+		strDate = ""
+		for i in http_response.info():
+			if (str(i) == "last-modified"):
+				strLastMod = http_response.info()[i]
+			elif (str(i) == "date"):
+				strDate = http_response.info()[i]
+		if (strLastMod != ""):
+			modified = datetime(*eut.parsedate(strLastMod)[:6])
+		
+		#try and get modified date from html body
+		date = selector.select("//p[contains(@class, \"right\")]/text()").re('(?<=Last updated on )\d{4}\-\d{2}\-\d{2}')
+		
 		if (len(date) > 0):
 			modified = datetime.strptime(date[0], "%Y-%m-%d")
-
+		
+		#if no last-modified header was provided, then just use the date header
+		if (modified == None && strDate != ""):
+			modified = datetime(*eut.parsedate(strLastMod)[:6])
+		
 			
 		self.document_id = self.myIndexer.indexDocument(url, title, len(words), modified)
 		print "id: ", self.document_id
