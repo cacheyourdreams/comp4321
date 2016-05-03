@@ -111,6 +111,7 @@ class Indexer:
 		#update maximum term frequency figure
 		sql_update = "UPDATE Documents SET max_tf=%s WHERE document_id=%s;"
 		self.dbInstance.query(sql_update,(max_tf,document_id))
+		
 		return len(term_frequency)
 	
 	def isStopword(self, word):

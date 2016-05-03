@@ -65,7 +65,7 @@ def main():
 	term_frequency int NOT NULL DEFAULT 0 COMMENT 'the number of appearances this word (word_id) makes in the document (document_id)',\
 	in_title TINYINT(1) DEFAULT 0,\
 	PRIMARY KEY (word_id, document_id),\
-	INDEX doc_index (document_id),\
+	INDEX forward_index (document_id),\
 	FOREIGN KEY (word_id) REFERENCES KeyWords(word_id) ON DELETE CASCADE,\
 	FOREIGN KEY (document_id) REFERENCES Documents(document_id) ON DELETE CASCADE);")
 
