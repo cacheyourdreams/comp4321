@@ -33,12 +33,12 @@ data = {}
 # set of result objects
 res = []
 
+# handle no results found case
 if len(results) <1 :
 	data['error'] = "No results found for: " + query;
 	json_data = json.dumps(data)
 	res.append(json_data);
 	print json.dumps([dict(result=r) for r in res])
-	
 else:
 	# stats json
 	data['time_taken'] = str(c);
@@ -46,8 +46,17 @@ else:
 	json_data = json.dumps(data)
 	res.append(json_data);
 
+	# variable to limit output
+	i = 0;
+
 	for r in results:
 
+		# limit output 50 results
+		if (i > 49):
+			break;
+		i+=1;
+
+		# unpack result
 		url = r[0]
 		rank = r[1][0]
 		title = r[1][1]
@@ -57,6 +66,7 @@ else:
 		parents = r[1][5]
 		children = r[1][6]
 
+		# create dictionary
 		data['url'] = url;
 		data['rank'] = rank;
 		data['title'] = title;
@@ -68,4 +78,5 @@ else:
 		json_data = json.dumps(data)
 		res.append(json_data);
 
+	# output string containing array of json
 	print json.dumps([dict(result=r) for r in res])

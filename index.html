@@ -36,18 +36,33 @@
     $(function() {
 
       // handle query submission
-      $("#query-submit").click(function(e) {
-
+      $("#query-form").submit(function(e) {
         e.preventDefault();
+        submitQueryToEngine();
+      });
+      $("#query-submit").click(function(e) {
+        e.preventDefault();
+        submitQueryToEngine();
+      });
 
-        var query = $("#query").val();
+      function submitQueryToEngine() {
+
+        // clear results container
+        $(".list-group").empty();
+        // show brand icon
+        $(".navbar-header a").show();
+        // reset progress bar
+        $('.progress-bar').css('width', (0)+'%').attr('aria-valuenow', (0)); 
+
+        var query = $("#search-query").val();
         
         $.ajax({
             type : 'POST',
-            url : 'script.py',
+            url : 'cgi-bin/script.py',
+            async: true,
             data : {'query': query}
         }).done(function(response) {
-          
+
           // parse the resulting string
           var list = $.parseJSON(response);
 
@@ -78,23 +93,25 @@
               continue;
             }
 
+            // calculate progress
+            var length = list.length-1;
+            var val = i / (list.length-1);
+            var progress = val * 100;
+
+            // update progress bar
+            $('.progress-bar').css('width', progress+'%').attr('aria-valuenow', progress);  
+
             // parse json object in array
             var json = $.parseJSON(list[i].result);
             $(".list-group").append(parseResultListELement(json));
           }
+
+          $("body").remove("footer");
           
         });
-      });
-
-      function getResultsTotalContainer(total) {
-        return '<button type="button" class="btn btn-success">Total Results:' + total + '</button>';
       }
 
-      function getResultsTimeContainer(time) {
-      return '<button type="button" class="btn btn-info">Time Elapsed: ' +  time + '</button>';
-      }
-
-
+      // handles hide/show parent/child containers
       $('body').on('click', '#list-toggle', function(e){
           e.preventDefault();
           if (!$(this).attr('data-toggled') || $(this).attr('data-toggled') == 'off'){
@@ -127,11 +144,7 @@
 
     function parseResultListELement(json) {
 
-      console.log(json);
-
       var el = "";
-
-
 
       el += '<div class="list-group-item">';
 
@@ -196,12 +209,21 @@
   </head>
 
   <body>
-    <nav class="navbar navbar-default">
+    <nav style="margin-bottom: 0"class="navbar navbar-default">
       <div class="container-fluid">
         <div class="navbar-header">
+         <a style="display:none" class="navbar-brand" href="#">
+          <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+         </a>
         </div>
       </div>
     </nav>
+
+<div class="progress" style="height:2px">
+  <div class="progress-bar progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">
+  </div>
+</div>
+
     <div class="container">
 
 
@@ -215,7 +237,7 @@
       <span class="input-group-addon" id="basic-addon1">
          <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
       </span>
-        <input id="query" type="text" class="form-control" id="search-query" placeholder="Search for...">
+        <input type="text" class="form-control" id="search-query" placeholder="Search for...">
         <span class="input-group-btn">
           <button id="query-submit" class="btn btn-default" type="button">Go!</button>
         </span>
@@ -235,17 +257,7 @@
         <!-- contains search results -->
       </div>
 
-<!--       <h3>Three equal columns</h3>
-      <p>Get three equal-width columns <strong>starting at desktops and scaling to large desktops</strong>. On mobile devices, tablets and below, the columns will automatically stack.</p>
-      <div class="row">
-        <div class="col-md-4">.col-md-4</div>
-        <div class="col-md-4">.col-md-4</div>
-        <div class="col-md-4">.col-md-4</div>
-      </div> -->
-
-
     </div> <!-- /container -->
-
 
     <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
     <script src="assets/js/ie10-viewport-bug-workaround.js"></script>
