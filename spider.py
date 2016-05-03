@@ -99,7 +99,7 @@ class Spider:
 			modified = datetime.strptime(date[0], "%Y-%m-%d")
 		
 		#if no last-modified header was provided, then just use the date header
-		if (modified == None && strDate != ""):
+		if (modified == None and strDate != ""):
 			modified = datetime(*eut.parsedate(strLastMod)[:6])
 		
 			
