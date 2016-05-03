@@ -41,17 +41,21 @@
 
     $(function() {
 
+      var lock = false;
+
       // handle query submission
       $("#query-form").submit(function(e) {
         e.preventDefault();
-        submitQueryToEngine();
+        if (!lock) submitQueryToEngine();
       });
       $("#query-submit").click(function(e) {
         e.preventDefault();
-        submitQueryToEngine();
+        if (!lock) submitQueryToEngine();
       });
 
       function submitQueryToEngine() {
+
+        lock = true;
 
         // clear results container
         $(".list-group").empty();
@@ -61,10 +65,12 @@
         $('.progress-bar').css('width', (0)+'%').attr('aria-valuenow', (0)); 
 
         var query = $("#search-query").val();
+
+        var html = "";
         
         $.ajax({
             type : 'POST',
-            url : 'script.py',
+            url : 'cgi-bin/script.py',
             async: true,
             data : {'query': query}
         }).done(function(response) {
@@ -109,10 +115,12 @@
 
             // parse json object in array
             var json = $.parseJSON(list[i].result);
-            $(".list-group").append(parseResultListELement(json));
+            html += parseResultListELement(json);
           }
 
-          $("body").remove("footer");
+          $(".list-group").append(html);
+
+          lock = false;
           
         });
       }
