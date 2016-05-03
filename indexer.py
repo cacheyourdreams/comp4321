@@ -21,16 +21,16 @@ class Indexer:
 		self.dbInstance.commit()
 
 
-	def indexDocument (self, url, title, size, modified = None):
+	def indexDocument (self, url, title, size, strSize, modified = None):
 		
 		sql_select = "SELECT document_id FROM Documents WHERE document_url = %s;"
-		sql_insert = "INSERT INTO Documents (document_url, document_title, document_size) \
-		VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE document_title = %s, document_size = %s;"
-		placeholders = (url,title,size,title,size)
+		sql_insert = "INSERT INTO Documents (document_url, document_title, document_size, document_chars) \
+		VALUES (%s, %s, %s, %s) ON DUPLICATE KEY UPDATE document_title = %s, document_size = %s, document_chars = %s;"
+		placeholders = (url,title,size,strSize,title,size,strSize)
 		if (modified != None):
-			sql_insert = "INSERT INTO Documents (document_url, document_title, document_size, modified) \
-			VALUES (%s, %s, %s, %s) ON DUPLICATE KEY UPDATE document_title = %s, document_size = %s, modified = %s;"
-			placeholders = (url,title,size,modified,title,size,modified)
+			sql_insert = "INSERT INTO Documents (document_url, document_title, document_size, modified, document_chars) \
+			VALUES (%s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE document_title = %s, document_size = %s, modified = %s, document_chars = %s;"
+			placeholders = (url,title,size,modified,strSize,title,size,modified,strSize)
 		
 		self.dbInstance.query(sql_insert, placeholders)
 
