@@ -33,11 +33,25 @@ class Searcher:
 			print d
 	
 	def getSearchResults (self, query):
-		searchTerms = self.parseQuery(query)	
+		parsed = self.parseQuery(query)	
+		searchTerms = parsed[0]
+		phrases_words = parsed[1]
 		if len(searchTerms) == 0:
 			return {}
-		queryWordIds = self.getWordIds(searchTerms)
-		documentVectors = self.getDocumentVectors(searchTerms)
+			
+		wordId = self.getWordIds(searchTerms)
+		mapping = wordId[0]
+		queryWordIds = wordId[1]
+		
+		phrases = []
+		for p in range(0,len(phrases_words)):
+			phrasesWordIds = []
+			for i in range(0, len(phrases_words[p])):
+				if phrases_words[p][i] in mapping.keys():
+					phrasesWordIds.append(mapping[phrases_words[p][i]])
+			phrases.append(phrasesWordIds)
+		
+		documentVectors = self.getDocumentVectors(searchTerms, phrases)
 		sortedDocs = self.sortDocumentVectors(queryWordIds,documentVectors)
 		return sortedDocs
 			
@@ -59,7 +73,7 @@ class Searcher:
 		return sorted(documents.items(), key=operator.itemgetter(1), reverse=True)
 		
 	
-	def getDocumentVectors(self, terms):
+	def getDocumentVectors(self, terms, phrases):
 		N = 0
 		self.dbInstance.query("SELECT COUNT(*) FROM Documents;")
 		N = self.dbInstance.fetchOne()[0]
@@ -94,8 +108,8 @@ class Searcher:
 						parents.append(link[0])
 					else:
 						children.append(link[1])
-				#document_size, vector, title, modified, keyword:freq, parents, children
-				documentVectors[row[indexValue]] = [row[5], dict(), row[7], row[9], dict() , parents, children]
+				#document_size, vector, title, modified, keyword:freq, parents, children, document_id
+				documentVectors[row[indexValue]] = [row[5], dict(), row[7], row[9], dict() , parents, children, row[1]]
 			#obtain normalised tf*idf value
 			val = (float(row[2])*log(N/float(row[4]),2)) / float(row[6])
 			#give a boost to the weight if it appears in the document title
@@ -103,25 +117,82 @@ class Searcher:
 			docVector[row[0]] = val
 			documentVectors[row[indexValue]][1] = docVector
 			documentVectors[row[indexValue]][4][row[11]] = row[2]
+			
 		
+		#Now do phrase matching
+		if len(phrases) > 0:
+			newDocumentVectors = dict()
+			#build lookup table for word positions for each document:
+			sql_select = "SELECT IndexPositions.document_id, position, IndexPositions.word_id FROM IndexPositions LEFT JOIN KeyWords on KeyWords.word_id = IndexPositions.word_id WHERE word=%s"
+			for x in range(1,len(terms)):
+				sql_select = sql_select + " OR word = %s"
+			sql_select = sql_select + ";"
+			self.dbInstance.query(sql_select, terms)
+			rows = self.dbInstance.fetchAll()
+			
+			lookup = dict()
+			
+			for r in rows:
+				dlookup = (dict(),dict())
+				if r[0] in lookup.keys():
+					dlookup = lookup[r[0]]
+				#word -> position
+				if (r[2] in dlookup[0]):
+					dlookup[0][r[2]].append(r[1])
+				else:
+					dlookup[0][r[2]] = [r[1]]
+				#position -> word
+				dlookup[1][r[1]] = r[2]
+				lookup[r[0]] = dlookup
+			
+			for dv in documentVectors:
+				#does this dv contain the phrases?
+				hasPhrases = True
+				for phrase in phrases:
+					if (phrase[0] not in (lookup[documentVectors[dv][7]][0]).keys()):
+						hasPhrases = False
+						break
+					#start with all locations of the first word in the phrase
+					potentialMatches = lookup[documentVectors[dv][7]][0][phrase[0]]
+					
+					for i in range(1,len(phrase)):
+						newPotentialMatches = []
+						for old in potentialMatches:
+							#does the next position after the previous match coorespond to the next letter in the phrase?
+							if (old+1) in (lookup[documentVectors[dv][7]][1]).keys() and lookup[documentVectors[dv][7]][1][old+1] == phrase[i]:
+								newPotentialMatches.append(old+1)
+						potentialMatches = newPotentialMatches
+						if len(potentialMatches) == 0:
+							hasPhrases = False
+							break
+						
+					if hasPhrases == False:
+						break
+				if hasPhrases:
+					newDocumentVectors[dv] = documentVectors[dv]
+					
+			documentVectors = newDocumentVectors
+			
 		return documentVectors
 	
 	def getWordIds(self, words):
+		mapping = {}
 		wordIds = []
 		#sanity check
 		if len(words) == 0:
 			return wordIds
 		
 		#select the word ids cooresponding to the given words form the database
-		sql_select = "SELECT word_id FROM KeyWords WHERE word=%s"
+		sql_select = "SELECT word, word_id FROM KeyWords WHERE word=%s"
 		for x in range(1,len(words)):
 			sql_select = sql_select + " OR word = %s"
 		sql_select = sql_select + ";"
 		self.dbInstance.query(sql_select, words)
 		rows = self.dbInstance.fetchAll()
 		for row in rows:
-			wordIds.append(row[0])
-		return wordIds
+			wordIds.append(row[1])
+			mapping[row[0]] = row[1]
+		return (mapping, wordIds)
 		
 	def parseQuery(self, query):
 		#select only alphanumeric words (allow dashes and underscores as well)
@@ -133,8 +204,26 @@ class Searcher:
 			if (self.myIndexer.isStopword(w)):
 				continue
 			stemmed = self.myIndexer.getStemmed(w)
-			searchTerms.append(stemmed)
-		return searchTerms
+			if len(stemmed) > 0:
+				searchTerms.append(stemmed.lower())
+		
+		#get terms between double quotes:
+		phrases = []
+		rephrases = re.findall("\"([^\"]+)\"", query)
+		for m in rephrases:
+			
+			phraseTerms = re.split("[^A-Za-z0-9\-_]+", m)
+			phrase = []
+			for w in phraseTerms:
+				if (self.myIndexer.isStopword(w)):
+					continue
+				stemmed = self.myIndexer.getStemmed(w)
+				if len(stemmed) > 0:
+					phrase.append(stemmed.lower())
+			if len(phrase) > 0:
+				phrases.append(phrase)
+		
+		return (searchTerms, phrases)
 
 	
 	def cosSim (self, queryTerms, docVector, docLength):
