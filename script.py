@@ -41,8 +41,8 @@ if len(results) <1 :
 	print json.dumps([dict(result=r) for r in res])
 else:
 	# stats json
-	data['time_taken'] = str(c);
-	data['total_results'] = str(len(results));
+	data['time_taken'] = str(c.total_seconds()) + " seconds.";
+	data['total_results'] = str(len(results)) + " (50 shown)" if len(results) > 50 else str(len(results));
 	json_data = json.dumps(data)
 	res.append(json_data);
 
