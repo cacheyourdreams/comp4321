@@ -55,8 +55,8 @@ class Searcher:
 			#r[1][5] = array{parents}
 			#r[1][6] = array{children}
 
-			documents[doc] = [sim, documentVectors[doc][2], documentVectors[doc][3], documentVectors[doc][0], documentVectors[doc][4], documentVectors[doc][5], documentVectors[doc][6]]
-		return sorted(documents.items(), key=operator.itemgetter(1))
+			documents[doc] = [sim, documentVectors[doc][2], documentVectors[doc][3].strftime("%A %d, %B %Y"), documentVectors[doc][0], documentVectors[doc][4], documentVectors[doc][5], documentVectors[doc][6]]
+		return sorted(documents.items(), key=operator.itemgetter(1), reverse=True)
 		
 	
 	def getDocumentVectors(self, terms):

@@ -9,7 +9,7 @@
     <meta name="author" content=""><!-- 
     <link rel="icon" href="../../favicon.ico"> -->
 
-    <title>Vector Model Search Engine</title>
+    <title>Asynchronous Realtime Search Engine</title>
 
     <!-- Bootstrap core CSS -->
     <link href="dist/css/bootstrap.min.css" rel="stylesheet">
@@ -44,7 +44,7 @@
         
         $.ajax({
             type : 'POST',
-            url : 'cgi-bin/script.py',
+            url : 'script.py',
             data : {'query': query}
         }).done(function(response) {
           
@@ -206,8 +206,8 @@
 
 
       <div class="page-header">
-        <h1>Vector Space Model Search Engine</h1>
-        <p class="lead">By Malcom McGregor, Olly Styles, and Nicholas Jarzembowski.</p>
+        <h1>Asynchronous Realtime Search Engine</h1>
+        <p class="lead">By Malcom Macgregor, Olly Styles, and Nicholas Jarzembowski.</p>
       </div>
 
       <form id="query-form" style="margin-top:2.5%">
